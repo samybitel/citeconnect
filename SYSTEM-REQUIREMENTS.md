@@ -27,7 +27,7 @@ qui conserve un **disque persistant** pour la base et les documents.
 |---|---|---|---|
 | **Node.js** | **≥ 18.18** (version 18 exigée en minimum par Next.js 15) — **22 LTS recommandé**, testé avec Node 24 | exécute le serveur et les scripts | ✅ |
 | **npm** | livrée avec Node (≥ 9) | installe les dépendances | ✅ |
-| **PostgreSQL** | **17** (16 et 15 acceptés) | base de données | ✅ |
+| **PostgreSQL** | **17** (seule version réellement testée sur ce projet) | base de données | ✅ |
 | **Git** | ≥ 2.30 | récupérer le code | ✅ |
 | Éditeur | VS Code + extension Prisma/ESLint | confort | optionnel |
 
