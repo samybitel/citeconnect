@@ -14,28 +14,72 @@ Plateforme numérique centralisée des services municipaux : **Mon compte**, **S
 - Authentification par session en base (cookie `httpOnly` `SameSite=Lax`), **bcryptjs**
 - Validation **zod** partagée client/serveur, journal d’audit, stockage privé des documents
 
-## Démarrage rapide (Windows, toolchain portable)
-
-```bat
-scripts\db-init.cmd     :: 1. initialise + démarre PostgreSQL (première fois uniquement)
-scripts\setup.cmd       :: 2. npm install + prisma generate + db push + seed
-scripts\dev.cmd         :: 3. démarre Next.js sur http://localhost:3000
-```
-
-Arrêter la base : `scripts\db-stop.cmd`.
-
-Si vous n’utilisez pas la toolchain portable, placez `tools\node` dans votre `PATH` (ou utilisez Node ≥ 18.18 installé) et un PostgreSQL local, puis :
+## Clonage et environnement
 
 ```bash
-cp .env.example .env    # adaptez DATABASE_URL
-npm install
-npm run db:generate
-npm run db:push
-npm run db:seed
-npm run dev
+git clone https://github.com/samybitel/citeconnect.git
+cd citeconnect
 ```
 
-Production : `npm run build` puis `npm start`.
+### Prérequis à installer toi-même
+
+| Outil | Version |
+|---|---|
+| Node.js | ≥ 18.18 (22 LTS recommandé) |
+| npm | livré avec Node |
+| PostgreSQL | 17, démarré sur `localhost:5432` |
+| Git | ≥ 2.30 |
+
+⚠️ Le dépôt ne contient **pas** la toolchain portable (`tools/node`, `tools/pgsql`,
+`tools/pgdata`) : les `scripts/*.cmd` du dépôt ne fonctionnent qu'avec ces binaires, donc
+sur une copie fraîchement clonée suis les étapes ci-dessous avec ton propre PostgreSQL.
+Le détail des versions et du matériel est dans [SYSTEM-REQUIREMENTS.md](SYSTEM-REQUIREMENTS.md).
+
+### 1. Créer la base et l'utilisateur
+
+```bash
+psql -U postgres -c "CREATE ROLE citeconnect LOGIN PASSWORD 'citeconnect_dev_2026';"
+psql -U postgres -c "CREATE DATABASE citeconnect OWNER citeconnect;"
+```
+
+### 2. Variables d'environnement
+
+```bash
+cp .env.example .env      # .env est ignoré par git : il ne monte jamais sur GitHub
+```
+
+Renseigne au moins la première ligne :
+
+```
+DATABASE_URL="postgresql://citeconnect:citeconnect_dev_2026@localhost:5432/citeconnect?schema=public"
+APP_URL="http://localhost:3000"
+```
+
+`SESSION_COOKIE_NAME`, `SESSION_TTL_DAYS`, `BCRYPT_ROUNDS`, `STORAGE_DIR` et `DEMO_MODE`
+ont des valeurs convenables par défaut (le dossier `storage/` est créé tout seul au
+premier upload).
+
+### 3. Dépendances, schéma, données de démonstration
+
+```bash
+npm install
+npm run db:generate   # télécharge le moteur Prisma + génère le client
+npm run db:push       # crée les tables
+npm run db:seed       # comptes démo + catalogue (procédures, abonnements, tickets)
+```
+
+`npm run db:seed` lit `.env` directement : sans ce fichier la commande échoue.
+
+### 4. Lancer
+
+```bash
+npm run dev           # http://localhost:3000
+```
+
+Vérification rapide : va sur `/login`, connecte-toi avec `demo@citeconnect.fr` /
+`Demo1234!` et le tableau de bord doit afficher rendez-vous, abonnement et notifications.
+
+Production : `npm run build` puis `npm start` (ou Docker, voir la section suivante).
 
 ## Déploiement (mettre le site en ligne)
 
