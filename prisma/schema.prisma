@@ -1,0 +1,385 @@
+// CiteConnect — Schéma de données PostgreSQL
+// Plateforme numérique centralisée des services municipaux.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  CITIZEN
+  AGENT
+  ADMIN
+}
+
+enum DocumentType {
+  CNI
+  PASSPORT
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ServiceCategory {
+  ETAT_CIVIL
+  URBANISME
+  LOGEMENT
+  SCOLAIRE
+  ACCOUNT
+}
+
+enum DossierStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  EXPIRED
+}
+
+enum TransportMode {
+  BUS
+  TRAIN
+  TRAM
+}
+
+enum NfcStatus {
+  SUCCESS
+  FAILED
+}
+
+enum NotificationType {
+  APPOINTMENT_CONFIRMED
+  APPOINTMENT_REMINDER
+  DOCUMENT_VERIFIED
+  DOCUMENT_REJECTED
+  DOSSIER_UPDATED
+  SUBSCRIPTION_EXPIRING
+  TICKET_PURCHASED
+  SYSTEM
+}
+
+// ---------------------------------------------------------------------------
+// Compte & sécurité
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  phone        String?
+  avatarPath   String?
+  role         Role     @default(CITIZEN)
+  isDemo       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions        Session[]
+  address         Address?
+  documents       Document[]
+  changeRequests  ChangeRequest[]
+  dossiers        Dossier[]
+  appointments    Appointment[]
+  subscriptions   Subscription[]
+  tickets         Ticket[]
+  nfcValidations  NfcValidation[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  street     String
+  complement String?
+  postalCode String
+  city       String
+  country    String   @default("France")
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChangeRequest {
+  id         String              @id @default(cuid())
+  userId     String
+  field      String
+  oldValue   String?
+  newValue   String
+  status     ChangeRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  reviewedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model Document {
+  id             String         @id @default(cuid())
+  userId         String
+  type           DocumentType
+  label          String
+  fileName       String
+  storedName     String
+  mimeType       String
+  size           Int
+  status         DocumentStatus @default(PENDING)
+  documentNumber String?
+  expiresAt      DateTime?
+  isDemo         Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Service public
+// ---------------------------------------------------------------------------
+
+model Procedure {
+  id                String          @id
+  category          ServiceCategory
+  title             String
+  summary           String
+  description       String
+  requiredDocuments String[]
+  steps             String[]
+  durationLabel     String
+  active            Boolean         @default(true)
+
+  dossiers Dossier[]
+}
+
+model Dossier {
+  id          String        @id @default(cuid())
+  userId      String
+  procedureId String
+  reference   String        @unique
+  status      DossierStatus @default(SUBMITTED)
+  data        Json          @default("{}")
+  isDemo      Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  procedure Procedure      @relation(fields: [procedureId], references: [id])
+  events    DossierEvent[]
+
+  @@index([userId])
+}
+
+model DossierEvent {
+  id        String   @id @default(cuid())
+  dossierId String
+  label     String
+  status    DossierStatus
+  createdAt DateTime @default(now())
+
+  dossier Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  userId      String
+  service     ServiceCategory
+  serviceLabel String
+  motif       String
+  date        DateTime
+  durationMin Int               @default(30)
+  status      AppointmentStatus @default(CONFIRMED)
+  location    String
+  reference   String            @unique
+  isDemo      Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([service, date])
+}
+
+// ---------------------------------------------------------------------------
+// Transport
+// ---------------------------------------------------------------------------
+
+model TransportPlan {
+  id           String   @id
+  name         String
+  description  String
+  priceCents   Int
+  durationDays Int
+  modes        TransportMode[]
+  popular      Boolean  @default(false)
+  active       Boolean  @default(true)
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  userId    String
+  planId    String
+  status    SubscriptionStatus @default(ACTIVE)
+  startDate DateTime
+  endDate   DateTime
+  autoRenew Boolean            @default(false)
+  reference String             @unique
+  isDemo    Boolean            @default(false)
+  createdAt DateTime           @default(now())
+
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan TransportPlan @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+}
+
+model TicketProduct {
+  id              String   @id
+  name            String
+  description     String
+  priceCents      Int
+  rides           Int
+  validityMinutes Int
+  modes           TransportMode[]
+  active          Boolean  @default(true)
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id             String       @id @default(cuid())
+  userId         String
+  productId      String
+  reference      String       @unique
+  code           String       @unique
+  status         TicketStatus @default(VALID)
+  ridesRemaining Int
+  purchasedAt    DateTime     @default(now())
+  activatedAt    DateTime?
+  expiresAt      DateTime?
+  isDemo         Boolean      @default(false)
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product      TicketProduct   @relation(fields: [productId], references: [id])
+  validations  NfcValidation[]
+
+  @@index([userId])
+}
+
+model NfcValidation {
+  id        String        @id @default(cuid())
+  userId    String
+  ticketId  String?
+  mode      TransportMode
+  status    NfcStatus
+  message   String
+  line      String
+  stop      String
+  isDemo    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Notifications & audit
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  read      Boolean          @default(false)
+  isDemo    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  ip        String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+}

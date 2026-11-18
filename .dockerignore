@@ -1,0 +1,46 @@
+# Dépendances et artefacts de build (régénérés dans l'image)
+node_modules
+.next
+out
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Binaires portables lourds (Node/PostgreSQL de dev Windows) — inutiles dans l'image
+tools
+downloads
+
+# Stockage privé des documents : ne JAMAIS embarquer dans l'image
+storage
+
+# Secrets et environnement local
+.env
+.env.*
+!.env.example
+
+# Contrôle de version et docs (non requis à l'exécution)
+.git
+.gitignore
+README.md
+DEPLOIEMENT.md
+
+# Scripts de lancement Windows (dev local)
+scripts
+
+# Échafaudages de vérification
+.buildcheck
+.shots
+
+# Logs et fichiers OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Fichiers Docker eux-mêmes
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Artefacts de déploiement (dossier site dédié + archive)
+citeconnect-site
+citeconnect-deploy.zip

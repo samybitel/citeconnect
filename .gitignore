@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Runtime / toolchain portables (binaires lourds)
+tools/node/
+tools/pgsql/
+tools/pgdata/
+tools/pgpw.txt
+
+# Stockage privé des documents
+storage/
+
+# Environnement
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Divers
+downloads/
+*.tsbuildinfo
+
+# Artefacts de déploiement (dossier site dédié + archive)
+citeconnect-site/
+citeconnect-deploy.zip

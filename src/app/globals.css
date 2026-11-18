@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: 244 246 251;
+  --surface: 255 255 255;
+  --surface-2: 248 250 252;
+  --border: 226 232 240;
+  --text: 15 23 42;
+  --text-muted: 100 116 139;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: 9 14 26;
+  --surface: 17 25 42;
+  --surface-2: 23 33 56;
+  --border: 36 48 74;
+  --text: 230 236 247;
+  --text-muted: 148 163 196;
+}
+
+@layer base {
+  * {
+    @apply border-slate-200 dark:border-[#24304a];
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-[#090e1a] dark:text-slate-100;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  ::selection {
+    @apply bg-brand-500/20;
+  }
+}
+
+@layer components {
+  .surface {
+    @apply bg-white dark:bg-[#11192a];
+  }
+  .surface-2 {
+    @apply bg-slate-50 dark:bg-[#172138];
+  }
+  .text-muted {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#090e1a];
+  }
+  .card {
+    @apply surface rounded-2xl border border-slate-200/80 shadow-card dark:border-[#24304a];
+  }
+}
+
+/* Barre de défilement discrète */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.4);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(148 163 184 / 0.6);
+  background-clip: content-box;
+}
+
+/* Animation de l'interface NFC */
+@keyframes nfc-wave {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.nfc-wave {
+  animation: nfc-wave 1.8s ease-out infinite;
+}
