@@ -1,13 +1,56 @@
 # CiteConnect — Guide de l'utilisateur
 
-Ce document explique **comment utiliser le site**, étape par étape. Il ne parle pas
-d'installation ni de technique : pour ça, voir [README.md](README.md) et
+Ce document explique **comment récupérer puis utiliser le site**, étape par étape, sans
+partir du principe que tu connais quoi que ce soit. La partie technique pure (installer
+Node.js, créer la base, lignes de commande) est dans [README.md](README.md), section
+« Clonage et environnement ». Les versions et le matériel nécessaires sont dans
+[SYSTEM-REQUIREMENTS.md](SYSTEM-REQUIREMENTS.md), et la mise en ligne dans
 [DEPLOIEMENT.md](DEPLOIEMENT.md).
 
 > ⚠️ **CiteConnect est une démonstration.** Toutes les données sont fictives.
 > Le paiement, la validation NFC et les démarches sont **simulés** : aucune somme n'est
 > réellement débitée, aucun titre de transport réel n'est émis, aucun dossier n'est envoyé
 > à une mairie. Ne saisissez **pas** vos vrais documents ni vos vraies informations.
+
+---
+
+## 0. Comment récupérer CiteConnect
+
+Trois situations, choisis la tienne :
+
+**a) Le site est déjà en ligne** (quelqu'un l'a hébergé pour toi).
+Tu n'installes rien : ouvre l'adresse dans ton navigateur, par exemple
+`https://citeconnect.exemple.fr`, et passe directement à la partie 1.
+
+**b) Tu dois l'installer toi-même sur ton ordinateur.**
+Tu « clones » le dépôt, c'est-à-dire que tu en télécharges le code complet, puis tu suis la
+partie **« Clonage et environnement »** du [README.md](README.md) qui te prend par la main
+jusqu'à l'ouverture du site.
+
+```bash
+git clone https://github.com/samybitel/citeconnect.git
+cd citeconnect
+```
+
+Il te faut au préalable **Node.js** et **PostgreSQL** installés (le README liste les
+versions et les sites officiels). Le site tournera ensuite à l'adresse
+`http://localhost:3000` — `localhost` veut dire « mon propre ordinateur ».
+
+**c) Tu veux seulement lire le code.**
+Sur la page GitHub, bouton vert **Code → Download ZIP**, dézippe, ouvre les fichiers avec
+ton éditeur. Rien ne fonctionne à l'écran dans ce cas, c'est juste pour consulter.
+
+### Les mots utilisés dans ce guide
+
+| Mot | Sens |
+|---|---|
+| **Dépôt** | le dossier du projet hébergé sur GitHub, avec tout son code |
+| **Cloner** | télécharger une copie de ce dépôt sur son ordinateur |
+| **Navigateur** | Chrome, Firefox, Edge, Safari… le logiciel avec lequel tu vois les sites |
+| **localhost** | ton propre ordinateur ; `localhost:3000` = le site qui tourne chez toi |
+| **Session** | le temps pendant lequel le site te reconnaît sans redemander ton mot de passe |
+| **Formulaire** | un cadre où tu tapes des informations, avec des cases obligatoires |
+| **Onglet / URL** | l'adresse écrite en haut du navigateur, comme `/account/documents` |
 
 ---
 

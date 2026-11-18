@@ -3,6 +3,44 @@
 Prérequis matériels et logiciels pour **faire tourner** CiteConnect, que ce soit sur un
 poste de développement ou sur un serveur en ligne.
 
+**Tu veux juste lancer le site chez toi ?** Va directement au
+[README.md](README.md), section « Clonage et environnement » : elle se suit sans rien
+connaître en ligne de commande. Ce document ici est la liste de ce qu'il faut avoir, et le
+pourquoi.
+
+### En une phrase
+
+Il te faut un ordinateur correct des années 2020, **Node.js** (pour faire tourner le
+programme), **PostgreSQL** (pour ranger les données) et un navigateur récent. C'est tout.
+
+### Test rapide : est-ce que mon poste convient ?
+
+Réponds oui à ces 4 questions, et tu peux installer CiteConnect en local :
+
+1. Mon ordinateur a au moins **4 Go de mémoire** (8 Go, c'est plus confortable) ?
+2. Il me reste au moins **3 Go libres** sur le disque ?
+3. J'arrive à ouvrir un **terminal** (PowerShell sur Windows, Terminal sur macOS) ?
+4. Mon navigateur est à jour (Chrome, Edge, Firefox ou Safari) ?
+
+Si c'est non à la 1 ou la 2, le site tournera mais l'installation sera très lente.
+Si c'est non à la 3, fais-toi aider pour l'étape « Clonage » uniquement : ensuite tout se
+passe dans le navigateur.
+
+### Les mots de ce document
+
+| Mot | Sens simple |
+|---|---|
+| **Node.js** | le programme qui exécute le site sur ton ordinateur |
+| **npm** | le gestionnaire qui télécharge les bibliothèques dont le site a besoin |
+| **PostgreSQL** | le logiciel qui range les comptes, dossiers, tickets et documents |
+| **Terminal / ligne de commande** | la fenêtre où l'on tape des commandes texte (PowerShell sur Windows, Terminal sur macOS) |
+| **VPS** | un ordinateur loué chez un hébergeur, allumé 24 h/24 |
+| **Docker** | une boîte qui emballe le site avec Node.js et PostgreSQL dedans |
+| **HTTPS / TLS** | le cadenas dans le navigateur : les données voyagent chiffrées |
+| **Reverse proxy** | le portier qui reçoit les visiteurs sur 443 et les passe au site |
+
+---
+
 Application : **Next.js 15 (App Router) + React 19 + TypeScript**, backend **Prisma 6 /
 PostgreSQL**, authentification par **sessions en base**.
 Ce n'est **pas** un site statique : il faut un environnement qui exécute **Node.js** et
@@ -26,15 +64,17 @@ qui conserve un **disque persistant** pour la base et les documents.
 | Logiciel | Version | Rôle | Obligatoire |
 |---|---|---|---|
 | **Node.js** | **≥ 18.18** (version 18 exigée en minimum par Next.js 15) — **22 LTS recommandé**, testé avec Node 24 | exécute le serveur et les scripts | ✅ |
-| **npm** | livrée avec Node (≥ 9) | installe les dépendances | ✅ |
+| **npm** | livré avec Node (≥ 9 ; **npm 11 ou 12 fonctionnent**, testés avec npm 11.19) | installe les dépendances | ✅ |
 | **PostgreSQL** | **17** (seule version réellement testée sur ce projet) | base de données | ✅ |
 | **Git** | ≥ 2.30 | récupérer le code | ✅ |
 | Éditeur | VS Code + extension Prisma/ESLint | confort | optionnel |
 
-> Le dépôt GitHub **ne contient pas** la toolchain portable (`tools/node`, `tools/pgsql`,
-> `tools/pgdata`, `scripts/*.cmd`) : elle reste sur le poste de développement local.
-> En clonant le dépôt, il faut donc **installer Node.js et PostgreSQL soi-même**, ou
-> réutiliser ces scripts depuis la copie locale du projet.
+> **Attention aux faux-amis du dépôt.** Le dossier `scripts/` est bien présent sur GitHub,
+> mais les `.cmd` qu'il contient (`db-init.cmd`, `setup.cmd`, `dev.cmd`) cherchent les
+> binaires dans `tools/node` et `tools/pgsql` — et **`tools/` n'est pas envoyé sur GitHub**
+> (il est ignoré, parce qu'il pèse plusieurs centaines de mégaoctets). Sur une copie
+> clonée, ces scripts échouent : il faut installer soi-même Node.js et PostgreSQL, puis
+> suivre les 4 étapes du [README.md](README.md).
 
 ### Accès réseau (développement)
 

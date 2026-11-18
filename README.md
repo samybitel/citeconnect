@@ -16,70 +16,148 @@ Plateforme numérique centralisée des services municipaux : **Mon compte**, **S
 
 ## Clonage et environnement
 
+Aucune expérience de la ligne de commande n'est nécessaire pour suivre cette partie.
+Un **terminal**, c'est une fenêtre où tu tapes des commandes : sur Windows tape
+« PowerShell » dans le menu Démarrer et ouvre-le, sur macOS cherche « Terminal ».
+Tout ce qui est écrit dans les blocs gris se copie-colle dans ce terminal, une ligne à la
+fois. Les texte après `#` sont des explications, tu peux les laisser, ils ne gênent pas.
+
+**Cloner** un dépôt, c'est en télécharger une copie sur ton ordinateur.
+
 ```bash
 git clone https://github.com/samybitel/citeconnect.git
 cd citeconnect
 ```
 
-### Prérequis à installer toi-même
+La première commande crée un dossier `citeconnect`, la seconde entre dedans.
+Si tu ne veux pas installer Git, clique sur le bouton vert **Code → Download ZIP** sur la
+page du dépôt, dézippe le fichier, puis entre dans le dossier avec
+`cd chemin/vers/citeconnect-main`.
 
-| Outil | Version |
-|---|---|
-| Node.js | ≥ 18.18 (22 LTS recommandé) |
-| npm | livré avec Node |
-| PostgreSQL | 17, démarré sur `localhost:5432` |
-| Git | ≥ 2.30 |
+### Étape 0 — installer les deux logiciels manquants
+
+| Logiciel | Version | Site officiel |
+|---|---|---|
+| **Node.js** | 22 LTS (18.18 est le minimum absolu) | [nodejs.org](https://nodejs.org) — prends la version LTS |
+| **PostgreSQL** | 17, installé et **démarré** sur `localhost:5432` | [postgresql.org/download](https://www.postgresql.org/download/) |
+| Git | au hasard la plus récente | [git-scm.com](https://git-scm.com) |
+
+Pendant l'installation de PostgreSQL on te demande un mot de passe pour le compte
+`postgres` : **retiens-le**, il sert à l'étape 1.
+
+Pour vérifier que tout est en place, tape :
+
+```bash
+node -v            # doit afficher v22.x.x
+npm -v             # doit afficher un nombre, par exemple 10.x.x
+git --version      # doit afficher git version 2.x
+```
 
 ⚠️ Le dépôt ne contient **pas** la toolchain portable (`tools/node`, `tools/pgsql`,
-`tools/pgdata`) : les `scripts/*.cmd` du dépôt ne fonctionnent qu'avec ces binaires, donc
-sur une copie fraîchement clonée suis les étapes ci-dessous avec ton propre PostgreSQL.
-Le détail des versions et du matériel est dans [SYSTEM-REQUIREMENTS.md](SYSTEM-REQUIREMENTS.md).
+`tools/pgdata`) : les `scripts/*.cmd` présents dans le dossier `scripts/` ne marchent
+qu'avec ces binaires. Sur une copie clonée, ignore-les et suis les 4 étapes ci-dessous
+avec ton propre PostgreSQL. Les versions et le matériel détaillés sont dans
+[SYSTEM-REQUIREMENTS.md](SYSTEM-REQUIREMENTS.md).
 
-### 1. Créer la base et l'utilisateur
+### Étape 1 — créer la base et son utilisateur
 
-```bash
-psql -U postgres -c "CREATE ROLE citeconnect LOGIN PASSWORD 'citeconnect_dev_2026';"
-psql -U postgres -c "CREATE DATABASE citeconnect OWNER citeconnect;"
-```
-
-### 2. Variables d'environnement
+On parle à PostgreSQL avec `psql`. Sur Windows tu peux aussi faire la même chose en
+collant ces deux lignes dans **pgAdmin → Query Tool**.
 
 ```bash
-cp .env.example .env      # .env est ignoré par git : il ne monte jamais sur GitHub
+psql -U postgres
 ```
 
-Renseigne au moins la première ligne :
+Il te demande le mot de passe choisi à l'installation de PostgreSQL. Une fois le prompt
+`postgres=#` affiché, colle :
+
+```sql
+CREATE ROLE citeconnect LOGIN PASSWORD 'citeconnect_dev_2026';
+CREATE DATABASE citeconnect OWNER citeconnect;
+\q
+```
+
+`\q` sert à quitter. Ces deux ordres ne font rien s'ils sont déjà là : c'est sans risque de
+les relancer.
+
+### Étape 2 — le fichier de configuration `.env`
+
+`.env` est le fichier où l'app lit son mot de passe de base et son adresse. Il est
+volontairement **absent de GitHub** (jamais de secret en ligne), donc tu le crées toi-même :
+
+```bash
+cp .env.example .env
+```
+
+Puis ouvre `.env` avec ton éditeur de texte et remplace les deux premières lignes :
 
 ```
 DATABASE_URL="postgresql://citeconnect:citeconnect_dev_2026@localhost:5432/citeconnect?schema=public"
 APP_URL="http://localhost:3000"
 ```
 
-`SESSION_COOKIE_NAME`, `SESSION_TTL_DAYS`, `BCRYPT_ROUNDS`, `STORAGE_DIR` et `DEMO_MODE`
-ont des valeurs convenables par défaut (le dossier `storage/` est créé tout seul au
-premier upload).
+Le reste (`SESSION_COOKIE_NAME`, `SESSION_TTL_DAYS`, `BCRYPT_ROUNDS`, `STORAGE_DIR`,
+`DEMO_MODE`) est déjà réglé correctement pour du développement. Le dossier `storage/`,
+qui garde tes documents privés, s'affiche tout seul au premier upload.
 
-### 3. Dépendances, schéma, données de démonstration
+### Étape 3 — installer le programme et préparer la base
 
-```bash
-npm install
-npm run db:generate   # télécharge le moteur Prisma + génère le client
-npm run db:push       # crée les tables
-npm run db:seed       # comptes démo + catalogue (procédures, abonnements, tickets)
-```
-
-`npm run db:seed` lit `.env` directement : sans ce fichier la commande échoue.
-
-### 4. Lancer
+Quatre commandes, dans cet ordre, la première est la plus longue (1 à 5 minutes selon ta
+connexion) :
 
 ```bash
-npm run dev           # http://localhost:3000
+npm install          # récupère les bibliothèques utilisées par le site
+npm run db:generate  # génère le client d'accès à la base (télécharge le moteur Prisma)
+npm run db:push      # crée les tables dans PostgreSQL
+npm run db:seed      # charge les comptes de démo et le catalogue
 ```
 
-Vérification rapide : va sur `/login`, connecte-toi avec `demo@citeconnect.fr` /
-`Demo1234!` et le tableau de bord doit afficher rendez-vous, abonnement et notifications.
+Sur les npm récents (v11 et plus), `npm install` se termine par un avertissement du genre
+`packages have install scripts not yet covered by allowScripts` (concernant `prisma`,
+`@prisma/client`, `@prisma/engines`, `esbuild`). **Ce n'est pas une erreur** et il n'y a
+rien à approuver : la commande suivante, `npm run db:generate`, fait précisément le travail
+que ces scripts n'ont pas fait. La seule chose à ne pas sauter reste `db:generate` — sans
+lui, le site ne démarre pas.
+
+`npm run db:seed` lit directement le fichier `.env` : sans lui, cette commande échoue.
+Tu peux relancer `db:seed` quand tu veux, il remet les comptes de démonstration à zéro.
+
+### Étape 4 — lancer et ouvrir le site
+
+```bash
+npm run dev
+```
+
+Le terminal affiche une ligne du type `Ready in ... ms` avec l'adresse, en général en moins
+de 5 secondes. **Laisse cette fenêtre ouverte** : tant que tu ne la fermes pas, le site est
+allumé. Ouvre ensuite **[http://localhost:3000](http://localhost:3000)** dans ton
+navigateur : la page de connexion apparaît. Pour entrer tout de suite :
+
+```
+email : demo@citeconnect.fr
+mot de passe : Demo1234!
+```
+
+Le tableau de bord doit montrer des rendez-vous, un abonnement et des notifications.
+Pour **arrêter** le site : `Ctrl` + `C` dans le terminal. Il faut relancer `npm run dev`
+à chaque nouvelle session de travail ; la base PostgreSQL, elle, continue de tourner en
+tâche de fond.
 
 Production : `npm run build` puis `npm start` (ou Docker, voir la section suivante).
+
+### Ça ne marche pas ?
+
+| Ce que tu vois | Ce que ça veut dire | Ce qu'il faut faire |
+|---|---|---|
+| `'git' n’est pas reconnu…` | Git n'est pas installé | installe-le, ou télécharge le ZIP |
+| `ECONNREFUSED 127.0.0.1:5432` | PostgreSQL n'est pas démarré | Windows : « Services » → PostgreSQL → Démarrer |
+| `password authentication failed for user "citeconnect"` | le mot de passe du `.env` ne correspond pas à la base | refais l'étape 1, ou change le rôle : `ALTER ROLE citeconnect PASSWORD 'citeconnect_dev_2026';` |
+| `P1000` / `permission denied` au `db:push` | le rôle n'a pas les droits sur la base | refais `CREATE DATABASE citeconnect OWNER citeconnect;` |
+| `address already in use: 3000` | un autre site occupe déjà le port 3000 | ferme l'autre `npm run dev`, ou lance `npm run dev -- -p 3001` puis va sur `http://localhost:3001` |
+| `EACCES` / `EPERM` sur `npm install` | droit refusé sur un dossier | ferme l'éditeur et les navigateurs, relance dans un dossier sans accents ni espaces |
+| `'npm' n’est pas reconnu…` / `command not found: npm` | Node.js n'est pas installé, ou le terminal a été ouvert avant l'installation | ferme le terminal, rouvre-le, tape `node -v` ; si ça échoue encore, réinstalle Node.js |
+| `Cannot find module '@prisma/client'` ou erreur au démarrage après `npm install` | l'étape `db:generate` a été sautée | relance `npm run db:generate`, puis `npm run dev` |
+| Le navigateur affiche « site inaccessible » | le serveur n'est pas lancé, ou `APP_URL` est faux | relance `npm run dev` et vérifie `APP_URL` dans `.env` |
 
 ## Déploiement (mettre le site en ligne)
 
