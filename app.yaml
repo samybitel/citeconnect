@@ -25,13 +25,12 @@ locality:
   regions:
     - fr-roub1
 
-# Décommente pour avoir des erreurs détaillées au 1er déploiement (runtime beta).
-# debug: true
+# Erreurs détaillées dans les réponses HTTP (runtime Node beta : indispensable pour diagnostiquer).
+debug: true
 
 env:
-  # Après le 1er déploiement, Wasmer te donne l'URL publique : remplace ci-dessous.
-  # En https, le cookie de session passe automatiquement en « secure ».
-  APP_URL: "https://citeconnect.wasmer.app"
+  # URL publique réelle de l'app Wasmer (l'ancienne citeconnect.wasmer.app sert la démo statique).
+  APP_URL: "https://citeconnect2.wasmer.app"
   APP_NAME: "CiteConnect"
   SESSION_COOKIE_NAME: "cc_session"
   SESSION_TTL_DAYS: "7"
