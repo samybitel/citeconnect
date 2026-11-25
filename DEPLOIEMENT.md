@@ -24,7 +24,13 @@ Conséquence :
 - ✅ **Hébergeur « managed » qui lit un Dockerfile** (Render, Railway) : moins de technique, mais il faut ajouter une base Postgres et un disque persistant.
 - ❌ **Hébergement PHP mutualisé classique** (OVH « Perso », o2switch, Hostinger web…) : fait pour PHP/WordPress, **ne fait pas tourner Node.js ni PostgreSQL**. Impossible sans tout réécrire.
 - ❌ **Vercel / Netlify « serverless »** : pas de disque persistant pour les documents privés et pas de Postgres durable inclus. Il faudrait refactoriser le stockage vers un objet storage (S3…) et une base externe. Pas adapté en l'état.
-- ❌ **Wasmer Edge / tout hébergement statique** : Wasmer sert soit du statique (dossier `out/`), soit du « edge » (WASM). Ni l'un ni l'autre ne fait tourner le moteur natif de Prisma ni un serveur Node avec disque persistant. Un déploiement statique de CiteConnect **échoue** (pas de base, pas de login, pas de documents). Il faut un hébergeur Node (Docker).
+- ⚠️ **Wasmer Edge** : possible depuis que Prisma utilise son **moteur WASM + le driver `pg`**
+  (plus aucun binaire natif) — mais le runtime Node de Wasmer est encore jeune, la base
+  managée et le volume persistant sont payants, et rien ne remplace un vrai serveur Node.
+  À garder comme option, pas comme chemin principal.
+- ❌ **Hébergement 100 % statique** (GitHub Pages, Netlify sans fonction, dossier `out/`) :
+  aucun ne fait tourner Node. Un déploiement statique de CiteConnect **échoue** — pas de
+  base, pas de login, pas de documents.
 
 ### Ma recommandation
 
@@ -125,7 +131,7 @@ Tu dois voir `[entrypoint] … Démarrage de Next.js` puis `✓ Ready`.
 ### Créer les comptes de démo / test (une seule fois)
 
 ```bash
-docker compose exec app node --import tsx prisma/seed.ts
+docker compose exec app tsx prisma/seed.ts
 ```
 
 Cela crée :
@@ -141,7 +147,7 @@ Cela crée :
 ### Accéder au site
 
 - Sans domaine : `http://IP_DU_VPS:3000`
-- Le port 3000 doit être ouvert dans le firewall du VPS (voir section 7).
+- Le port 3000 doit être ouvert dans le firewall du VPS (voir section 8).
 
 ---
 
@@ -209,7 +215,7 @@ Ces plateformes lisent directement le `Dockerfile`.
    - `STORAGE_DIR` = `/app/storage`
    - `DEMO_MODE`, `SESSION_TTL_DAYS`, `BCRYPT_ROUNDS` (voir `.env.production.example`)
 5. Déploie. Le schéma est appliqué automatiquement au démarrage (`prisma db push`).
-6. Seed une fois via le **Shell** Render : `node --import tsx prisma/seed.ts`.
+6. Seed une fois via le **Shell** Render : `tsx prisma/seed.ts`.
 
 **Railway :** même principe (service depuis Dockerfile + plugin PostgreSQL + volume monté sur `/app/storage`).
 
@@ -218,7 +224,52 @@ Ces plateformes lisent directement le `Dockerfile`.
 
 ---
 
-## 7. Firewall, sauvegardes, mises à jour
+## 7. Déployer n'importe où, sans Docker : le paquet `deploy/`
+
+Si l'hébergeur ne sait pas lire un Dockerfile mais sait lancer **Node.js** (interface
+d'upload d'un hébergeur, petit VPS sans Docker, serveur de la mairie, Wasmer Edge…), il existe
+un paquet autonome. Il se construit sur **ton** ordinateur et s'envoie tel quel :
+
+```bash
+npm run build                    # compile l'application
+npm run pack                     # fabrique deploy/ (~65 Mo, dépendances incluses)
+zip -r citeconnect-deploy.zip deploy    # sur Windows : clic droit sur deploy → « Envoyer vers
+#                                        > Dossier compressé » (ou Compress-Archive en PowerShell)
+```
+
+Le dossier `deploy/` contient tout ce qu'il faut pour démarrer : le serveur (`server.js`),
+les dépendances déjà résolues, le moteur Prisma en **WASM** (aucun binaire à télécharger au
+démarrage), les fichiers statiques, le schéma de base et un `DEMARRAGE.txt`. Ni `node_modules`
+de développement, ni `tools/`, ni cache de build.
+
+**Une seule chose manque : le CLI Prisma** (il pèserait ~40 Mo de plus). Il sert uniquement à
+créer les tables, une fois. Deux façons de faire :
+
+- si le serveur a Internet : `npx prisma@6 db push --skip-generate`, depuis `deploy/` ;
+- sinon, depuis **ton** ordinateur : mets l'`DATABASE_URL` de la base en ligne dans le `.env`
+  du projet, puis `npm run db:push` (et `npm run db:seed` pour les données de démo). La base
+  est distante, donc le CLI n'a pas besoin d'être sur le serveur.
+
+Sur le serveur, il ne reste qu'une commande :
+
+```bash
+cd deploy
+DATABASE_URL="postgresql://user:mdp@hote:5432/db?schema=public" \
+APP_URL="https://mon-domaine.fr" \
+STORAGE_DIR="./storage" \
+node server.js
+```
+
+Conditions chez l'hébergeur : **Node.js 18 ou plus récent**, un **port libre** (variable
+`PORT`, 3000 par défaut) et un **dossier persistant** pour `STORAGE_DIR`. C'est tout — ni
+Docker, ni npm, ni PostgreSQL installé sur la machine (la base peut être 100 % extérieure).
+
+> ⚠️ Le paquet doit être **reconstruit** à chaque modification du code : il contient le site
+> compilé, pas les sources.
+
+---
+
+## 8. Firewall, sauvegardes, mises à jour
 
 **Ouvrir les ports (VPS, avec ufw) :**
 
@@ -268,7 +319,7 @@ docker compose down           # tout arrêter (les données restent dans les vol
 
 ---
 
-## 8. Référence des variables d'environnement
+## 9. Référence des variables d'environnement
 
 | Variable | Rôle | Exemple |
 |---|---|---|
@@ -284,16 +335,22 @@ docker compose down           # tout arrêter (les données restent dans les vol
 | `SESSION_COOKIE_NAME` | Nom du cookie de session | `cc_session` |
 | `SESSION_TTL_DAYS` | Durée de session (jours) | `7` |
 | `BCRYPT_ROUNDS` | Coût du hachage des mots de passe | `12` |
+| `PG_POOL_MAX` | Connexions PostgreSQL simultanées (pool `pg`) | `10` |
 
 ---
 
-## 9. Notes techniques (bon à savoir)
+## 10. Notes techniques (bon à savoir)
 
 - **Police auto-hébergée :** le site n'appelle **pas** Google Fonts. La police Inter est
   incluse dans `src/fonts/` → le build fonctionne **même sans internet** et ne fuite pas
   l'IP des visiteurs vers un CDN tiers (mieux pour le RGPD).
-- **Runtime :** l'image utilise `next start` (pas le mode standalone) avec `node_modules`
-  complet, pour que Prisma et bcryptjs se chargent correctement.
+- **Runtime :** l'image démarre le build Next en mode **standalone** (`node server.js`) avec
+  un `node_modules` réduit au strict nécessaire, plus les CLI `prisma` et `tsx` installés une
+  seule fois pour l'entrée point de démarrage. Prisma tourne sur son moteur **WASM** et le
+  driver `pg` : aucun binaire natif n'est requis.
+- **Taille :** l'application compilée tient dans ~65 Mo (voir le paquet `deploy/`, section 7).
+  Ce qui pèse plus d'1 Go sur un poste de développement, c'est `node_modules/` et le dossier
+  `tools/` — aucun des deux ne part sur le serveur.
 - **Schéma de base :** appliqué automatiquement au démarrage via `prisma db push --skip-generate`.
   Pour un suivi de migrations plus fin en production, tu peux passer à `prisma migrate deploy`.
 - **Documents privés :** stockés dans le volume `storage`, servis uniquement par des routes

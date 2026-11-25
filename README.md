@@ -167,19 +167,44 @@ Le projet est prêt à être auto-hébergé via **Docker** (`Dockerfile`, `docke
 ```bash
 cp .env.production.example .env   # renseigner POSTGRES_PASSWORD et APP_URL
 docker compose up -d --build
-docker compose exec app node --import tsx prisma/seed.ts   # comptes démo + test (une fois)
+docker compose exec app tsx prisma/seed.ts   # comptes démo + test (une fois)
 ```
+
+Pas de Docker chez l'hébergeur ? `npm run build && npm run pack` fabrique un dossier
+`deploy/` de **65 Mo** qui se pose sur n'importe quel serveur Node.js (section 7 de
+`DEPLOIEMENT.md`).
 
 👉 **Guide complet pas à pas : [DEPLOIEMENT.md](DEPLOIEMENT.md)** — choix de l'hébergeur
 (VPS + Docker recommandé, ~4–5 €/mois ; alternative Render/Railway), nom de domaine + HTTPS,
 sauvegardes, mises à jour et référence des variables d'environnement.
 
-> **Pourquoi pas Wasmer (ni aucun hébergement statique) :** CiteConnect a un vrai backend
-> (PostgreSQL + sessions + documents privés). Il faut donc un hébergeur qui **exécute Node.js**
-> et garde un disque persistant. Un export statique (type `output: 'export'` / dossier `out/`)
-> ou le runtime « edge » de Wasmer ne peuvent pas faire tourner la base ni le moteur Prisma :
-> le login, les comptes et les documents ne marcheraient pas. C'est pour ça qu'un déploiement
-> statique échoue. Le chemin supporté est Docker (VPS, Render ou Railway).
+> **Ce qu'il faut chez l'hébergeur :** un environnement qui **exécute Node.js** et garde un
+> **disque persistant** (base PostgreSQL + documents privés). Un export statique (`out/`,
+> `output: 'export'`) ne peut pas marcher : il n'y a ni routes API, ni sessions, ni base.
+> Depuis que Prisma tourne sur son **moteur WASM + driver `pg`** (aucun binaire natif),
+> les plateformes fermées aux binaires deviennent possibles — Wasmer Edge compris, même si
+> ce n'est pas le chemin recommandé.
+
+### Paquet de déploiement léger (65 Mo)
+
+Le build produit deux choses : `.next/standalone`, puis un dossier `deploy/` autonome :
+
+```bash
+npm run build   # puis :
+npm run pack    # assemble deploy/ (~65 Mo, node_modules inclus, prêt à envoyer)
+```
+
+`deploy/` contient le serveur (`node server.js`), ses dépendances déjà résolues, le moteur
+Prisma WASM, les fichiers statiques et le schéma. Ni `node_modules` de développement, ni
+`tools/`, ni cache. Le démarrage sur place :
+
+```bash
+cd deploy
+node server.js                        # PORT, DATABASE_URL (ou DB_*), APP_URL, STORAGE_DIR
+```
+
+Comme le paquet embarque tout, il se pose indifféremment sur un VPS, un conteneur, un
+hébergeur Node ou une interface d'upload d'hébergeur.
 
 ## Comptes
 

@@ -79,7 +79,9 @@ qui conserve un **disque persistant** pour la base et les documents.
 ### Accès réseau (développement)
 
 - **Une fois** au démarrage : accès à `registry.npmjs.org` (`npm install`) et au registre
-  de Prisma (`npx prisma generate`, qui télécharge le moteur de base).
+  de Prisma (`npx prisma generate`, qui récupère le client et le moteur **WASM**). Après ça,
+  plus aucun binaire n'est téléchargé — c'est ce qui permet de poser l'app chez un hébergeur
+  qui interdit les exécutables natifs.
 - Ensuite, le site tourne **hors ligne** : la police Inter est auto-hébergée dans
   `src/fonts/`, aucun appel à Google Fonts ni à un CDN.
 
@@ -107,14 +109,16 @@ base PostgreSQL sur une machine séparée.
 | **Recommandée : Docker** | Ubuntu 22.04 ou 24.04 LTS, **Docker Engine ≥ 24**, **Docker Compose v2**, **Git**. Node.js et PostgreSQL ne sont **pas** installés sur l'hôte : ils tournent dans les conteneurs (`node:22-bookworm-slim` et `postgres:17-alpine`). |
 | Alternative : PaaS (Render, Railway, Fly.io) | support des **applications Docker** + une **base PostgreSQL managée** + un **disque persistant** monté sur `/app/storage`. |
 | Alternative : Node installé sur le serveur | Ubuntu 22.04/24.04, Node 22 LTS, PostgreSQL 17, un reverse proxy (Nginx ou Caddy) pour HTTPS. |
+| Alternative : le paquet `deploy/` sans Docker | `npm run build` puis `npm run pack` sur **ta** machine → un dossier de **65 Mo** autonome. Chez l'hébergeur : **Node.js ≥ 18**, un port libre, un dossier inscriptible. Ni npm, ni Docker, ni PostgreSQL sur place. |
 
 ### Incompatibilités connues
 
 | Hébergement | Verdict | Pourquoi |
 |---|---|---|
-| Page GitHub, Netlify/Vercel en export statique, tout serveur « edge » WASM | ❌ **impossible** | pas de Node.js avec disque persistant : ni base, ni login, ni documents |
+| GitHub Pages, Netlify/Vercel « serverless », tout export statique | ❌ **impossible** | aucun serveur Node avec disque persistant : ni base, ni login, ni documents |
 | Mutualisé PHP (OVH Perso, o2switch, Hostinger Web…) | ❌ **impossible** | ne fait pas tourner Node.js ni PostgreSQL |
-| VPS avec Docker, Render, Railway, Fly.io | ✅ **supporté** | voir `DEPLOIEMENT.md` |
+| VPS avec Docker, Render, Railway, Fly.io, ou n'importe quel hôte Node | ✅ **supporté** | voir `DEPLOIEMENT.md` (sections 2-4 pour Docker, section 7 pour le paquet `deploy/`) |
+| Wasmer Edge (runtime « edge » WASM) | ⚠️ **possible, non testé en ligne** | plus aucun binaire natif n'est requis (moteur Prisma en WASM), mais il faut la base managée + un volume persistant ; le runtime Node de Wasmer est en beta |
 
 ---
 

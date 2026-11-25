@@ -29,24 +29,28 @@ ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate && npm run build
 
 ########## Étape 3 : image d'exécution ##########
+# Le build Next est en mode « standalone » : .next/standalone contient déjà le
+# node_modules réduit au strict nécessaire. On n'embarque donc pas les ~700 Mo de
+# dépendances de dev, et on lance `node server.js` (le mode officiel du standalone).
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+# CLI base de données only (schéma + seed au démarrage), hors image applicative.
+RUN npm install -g prisma@6 tsx@4
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV STORAGE_DIR=/app/storage
 
-# node_modules complet (inclut prisma CLI + tsx pour db push / seed au démarrage)
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/src ./src
 COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/next.config.mjs ./next.config.mjs
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 RUN chmod +x docker-entrypoint.sh \

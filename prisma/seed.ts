@@ -1,13 +1,15 @@
 /* eslint-disable no-console */
 import { PrismaClient, type ServiceCategory, type TransportMode } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { DEMO_ACCOUNT, TEST_ACCOUNT } from '../src/lib/constants';
-import { resolveDatabaseUrl } from '../src/lib/database-url';
+import { resolvePgPoolConfig } from '../src/lib/database-url';
 
-const prisma = new PrismaClient({ datasourceUrl: resolveDatabaseUrl() });
+const prisma = new PrismaClient({ adapter: new PrismaPg(new pg.Pool(resolvePgPoolConfig())) });
 const STORAGE_DIR = path.resolve(process.env.STORAGE_DIR ?? './storage');
 
 function addDays(base: Date, days: number) {

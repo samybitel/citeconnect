@@ -3,6 +3,11 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Moteur WASM + driver pg : aucun binaire natif à télécharger au démarrage.
+  // L'app tourne donc pareil en local, sous Docker, ou chez un hébergeur qui interdit
+  // les binaires (Wasmer Edge). Depuis Prisma 6.19, driverAdapters/queryCompiler sont
+  // stables et découlent de cette engineType : pas de previewFeatures à déclarer.
+  engineType = "client"
 }
 
 datasource db {

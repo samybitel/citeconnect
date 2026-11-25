@@ -31,6 +31,7 @@ Thumbs.db
 downloads/
 *.tsbuildinfo
 
-# Artefacts de déploiement (dossier site dédié + archive)
+# Artefacts de déploiement (dossier site dédié + archive + paquet packagé)
 citeconnect-site/
 citeconnect-deploy.zip
+deploy/
