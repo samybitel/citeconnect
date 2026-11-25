@@ -3,7 +3,7 @@
 # Doc : https://docs.wasmer.io/edge/configuration/
 
 kind: wasmer.io/App.v0
-owner: VOTRE_COMPTE_WASMER          # ← remplace par ton nom d'utilisateur Wasmer
+owner: samybitel
 name: citeconnect
 package: .
 
