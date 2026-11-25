@@ -187,11 +187,12 @@ sauvegardes, mises à jour et référence des variables d'environnement.
 
 ### Paquet de déploiement léger (65 Mo)
 
-Le build produit deux choses : `.next/standalone`, puis un dossier `deploy/` autonome :
+`npm run build` produit un serveur autonome dans `.next/standalone` ; `npm run pack` en tire
+un dossier `deploy/` prêt à envoyer :
 
 ```bash
 npm run build   # puis :
-npm run pack    # assemble deploy/ (~65 Mo, node_modules inclus, prêt à envoyer)
+npm run pack    # assemble deploy/ (~65 Mo, dépendances incluses)
 ```
 
 `deploy/` contient le serveur (`node server.js`), ses dépendances déjà résolues, le moteur
