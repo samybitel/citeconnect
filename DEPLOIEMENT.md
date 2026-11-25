@@ -237,7 +237,8 @@ zip -r citeconnect-deploy.zip deploy    # sur Windows : clic droit sur deploy �
 #                                        > Dossier compressé » (ou Compress-Archive en PowerShell)
 ```
 
-Le dossier `deploy/` contient tout ce qu'il faut pour démarrer : le serveur (`server.js`),
+Le dossier `deploy/` fait **65 Mo** décompressé, **19 Mo zippé**. Il contient tout ce qu'il
+faut pour démarrer : le serveur (`server.js`),
 les dépendances déjà résolues, le moteur Prisma en **WASM** (aucun binaire à télécharger au
 démarrage), les fichiers statiques, le schéma de base et un `DEMARRAGE.txt`. Ni `node_modules`
 de développement, ni `tools/`, ni cache de build.

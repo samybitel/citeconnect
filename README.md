@@ -196,7 +196,8 @@ npm run pack    # assemble deploy/ (~65 Mo, node_modules inclus, prêt à envoye
 
 `deploy/` contient le serveur (`node server.js`), ses dépendances déjà résolues, le moteur
 Prisma WASM, les fichiers statiques et le schéma. Ni `node_modules` de développement, ni
-`tools/`, ni cache. Le démarrage sur place :
+`tools/`, ni cache. Zippé, le paquet pèse **19 Mo** — contre 1,9 Go pour le dossier de
+développement complet. Le démarrage sur place :
 
 ```bash
 cd deploy

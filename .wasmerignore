@@ -1,0 +1,38 @@
+# Ce qui ne doit JAMAIS partir dans le paquet Wasmer.
+# Wasmer téléverse le dossier du projet : sans ce fichier, il enverrait
+# node_modules/ (≈ 700 Mo), le cache de build et les documents privés.
+
+# Dépendances et artefacts de build
+node_modules
+.next
+out
+deploy
+citeconnect-deploy.zip
+*.tsbuildinfo
+
+# Binaires portables de développement (Node/PostgreSQL Windows)
+tools
+downloads
+
+# Documents privés : jamais téléversés
+storage
+
+# Secrets et environnement local
+.env
+.env.local
+.env.*
+!.env.example
+!.env.production.example
+
+# Contrôle de version
+.git
+
+# Logs et OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Échafaudages de vérification
+.buildcheck
+.shots

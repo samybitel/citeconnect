@@ -1,0 +1,40 @@
+# CiteConnect — configuration Wasmer Edge
+# Déploiement : `wasmer deploy` depuis ce dossier.
+# Doc : https://docs.wasmer.io/edge/configuration/
+
+kind: wasmer.io/App.v0
+owner: VOTRE_COMPTE_WASMER          # ← remplace par ton nom d'utilisateur Wasmer
+name: citeconnect
+package: .
+
+# Base PostgreSQL managée (une par app).
+# Wasmer injecte DB_HOST / DB_PORT / DB_NAME / DB_USERNAME / DB_PASSWORD.
+# L'app construit sa connexion automatiquement (voir src/lib/database-url.ts).
+capabilities:
+  database:
+    engine: postgres
+
+# Volume persistant pour les documents privés (CNI, passeports, avatars).
+# L'app y écrit via STORAGE_DIR. Les volumes sont régionaux : même région que l'app.
+volumes:
+  - name: storage
+    mount: /data
+
+# Région (France). Base + volume + app doivent être dans la même région.
+locality:
+  regions:
+    - fr-roub1
+
+# Décommente pour avoir des erreurs détaillées au 1er déploiement (runtime beta).
+# debug: true
+
+env:
+  # Après le 1er déploiement, Wasmer te donne l'URL publique : remplace ci-dessous.
+  # En https, le cookie de session passe automatiquement en « secure ».
+  APP_URL: "https://citeconnect.wasmer.app"
+  APP_NAME: "CiteConnect"
+  SESSION_COOKIE_NAME: "cc_session"
+  SESSION_TTL_DAYS: "7"
+  BCRYPT_ROUNDS: "12"
+  STORAGE_DIR: "/data"
+  DEMO_MODE: "true"
