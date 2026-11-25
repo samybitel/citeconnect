@@ -354,6 +354,10 @@ docker compose down           # tout arrêter (les données restent dans les vol
   `tools/` — aucun des deux ne part sur le serveur.
 - **Schéma de base :** appliqué automatiquement au démarrage via `prisma db push --skip-generate`.
   Pour un suivi de migrations plus fin en production, tu peux passer à `prisma migrate deploy`.
+- **Client Prisma généré au build :** `npm run build` lance `prisma generate` avant `next build`,
+  et le CLI `prisma` est une dépendance de production (pas de dev). Sinon, un hébergeur qui
+  installe sans les paquets de dev — ou qui bloque les scripts d'installation — se retrouve
+  avec un client Prisma vide et le build échoue sur les types (`ServiceCategory`, etc.).
 - **Documents privés :** stockés dans le volume `storage`, servis uniquement par des routes
   authentifiées avec contrôle de propriété. Rien n'est accessible publiquement.
 - **Simulations :** NFC Express, paiement et démarches restent simulés (aucune transaction
